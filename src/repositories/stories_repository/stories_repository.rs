@@ -3,6 +3,7 @@ use crate::models::response::{ Response };
 use crate::models::stories::stories::{ Stories, ListStories };
 use crate::models::stories::payload::{ PostStoryCategoryMapping };
 use crate::models::stories::response::{ ListStoriesResponse };
+use crate::utils::helpers::{get_next_increment_id, generate_url_key};
 
 extern crate serde_json;
 
@@ -66,7 +67,9 @@ impl StoriesRepository {
                             Ok(doc) => {
                                 let document = Stories {
                                     story_id: doc.get_str("story_id").unwrap().to_owned(),
+                                    increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
                                     title: doc.get_str("title").unwrap().to_owned(),
+                                    url_key: doc.get_str("url_key").unwrap().to_owned(),
                                     author: doc.get_str("author").unwrap().to_owned(),
                                     description: doc.get_str("description").unwrap().to_owned(),
                                     publish_date: doc.get_str("publish_date").unwrap().to_owned(),
@@ -98,6 +101,10 @@ impl StoriesRepository {
         let db = self.connection.database(database_name.as_str());
 
 //      println!("{:#?}", story);
+
+        let increment_id = get_next_increment_id(&self.connection, collection_name.as_str()).await;
+        let url_key = generate_url_key(&document.title);
+
         let document_id = uuid::Uuid::new_v4().to_string();
 
                 let _ex = db
@@ -105,7 +112,9 @@ impl StoriesRepository {
                     .insert_one(
                         doc! {
                             "story_id": document_id,
+                            "increment_id": increment_id,
                             "title": document.title,
+                            "url_key": url_key,
                             "author": document.author,
                             "description": document.description,
                             "publish_date": document.publish_date,

@@ -4,9 +4,12 @@ use serde::{Deserialize, Serialize};
 pub struct Chapters {
     pub chapter_id: String,
     pub story_id: String,
+    pub increment_id: i64, // New field for auto-increment ID
     pub title: String,
+    pub url_key: String,
     pub content: String,
     pub ordered: i64,
+    pub status: String,
     pub created_date: String,
     pub updated_date: String,
 }
