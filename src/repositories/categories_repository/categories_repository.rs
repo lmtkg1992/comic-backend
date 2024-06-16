@@ -2,6 +2,8 @@ use crate::config::{Config, IConfig};
 use crate::models::categories::categories::{Category, ListCategories};
 use crate::models::categories::response::{ListCategoriesResponse};
 use crate::models::response::Response;
+use crate::utils::helpers::{get_next_increment_id, generate_url_key};
+
 use futures::stream::StreamExt;
 use mongodb::bson::Document;
 use mongodb::error::Error;
@@ -56,7 +58,9 @@ impl CategoriesRepository {
                 Ok(doc) => {
                     let document = Category {
                         category_id: doc.get_str("category_id").unwrap().to_owned(),
-                        name: doc.get_str("name").unwrap().to_owned(),
+                        increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
+                        title: doc.get_str("title").unwrap().to_owned(),
+                        url_key: doc.get_str("url_key").unwrap().to_owned(),
                         type_category: doc.get_str("type_category").unwrap().to_owned(),
                         priority: doc.get_i64("priority").unwrap().to_owned(),
                     };
@@ -84,12 +88,17 @@ impl CategoriesRepository {
 
         let document_id = uuid::Uuid::new_v4().to_string();
 
+        let increment_id = get_next_increment_id(&self.connection, collection_name.as_str()).await;
+        let url_key = generate_url_key(&document.title);
+
         let _ex = db
             .collection(collection_name.as_str())
             .insert_one(
                 doc! {
                     "category_id": document_id,
-                    "name": document.name,
+                    "increment_id" : increment_id,
+                    "title": document.title,
+                    "url_key": url_key,
                     "priority": document.priority,
                     "type_category": document.type_category,
                 },
@@ -121,7 +130,7 @@ impl CategoriesRepository {
         }
 
         let name: String = query_string
-            .get("name")
+            .get("title")
             .unwrap_or(&String::from(""))
             .to_string();
         if name != "" {
