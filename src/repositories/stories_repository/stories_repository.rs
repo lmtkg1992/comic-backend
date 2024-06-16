@@ -136,6 +136,26 @@ impl StoriesRepository {
                 }
     }
 
+    /**
+     * Get story detail by id
+     */
+    pub async fn get_detail_by_id(&self, story_id: &str) -> Option<Stories> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "story_id": story_id };
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        result.and_then(|doc| bson::from_document(doc).ok())
+    }
+
     pub async fn assign_categories(&self, mapping: PostStoryCategoryMapping) -> Response {
 
         let _config: Config = Config {};

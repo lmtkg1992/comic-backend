@@ -44,6 +44,20 @@ async fn get_list(_req: HttpRequest) -> HttpResponse {
     }
 }
 
+#[get("/detail/{story_id}")]
+async fn get_detail(req: HttpRequest) -> HttpResponse {
+    let story_id = req.match_info().get("story_id").unwrap();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: StoriesRepository = StoriesRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.get_detail_by_id(story_id).await {
+        Some(story) => HttpResponse::Ok().json(story),
+        None => HttpResponse::NotFound().body("Story not found"),
+    }
+}
+
 #[post("/assign_categories")]
 async fn assign_categories(mapping: web::Json<PostStoryCategoryMapping>) -> HttpResponse {
     let _connection_client = Connection::init().await.unwrap();
@@ -56,5 +70,6 @@ async fn assign_categories(mapping: web::Json<PostStoryCategoryMapping>) -> Http
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_list);
+    cfg.service(get_detail);
     cfg.service(assign_categories);
 }
