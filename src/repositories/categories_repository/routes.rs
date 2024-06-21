@@ -42,7 +42,22 @@ async fn get_list(_req: HttpRequest) -> HttpResponse {
     }
 }
 
+#[get("/detail/{category_id}")]
+async fn get_detail(req: HttpRequest) -> HttpResponse {
+    let category_id = req.match_info().get("category_id").unwrap();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: CategoriesRepository = CategoriesRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.get_detail_by_id(category_id).await {
+        Some(category) => HttpResponse::Ok().json(category),
+        None => HttpResponse::NotFound().body("Category not found"),
+    }
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_list);
+    cfg.service(get_detail);
 }

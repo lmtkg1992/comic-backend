@@ -118,6 +118,23 @@ impl CategoriesRepository {
         }
     }
 
+    pub async fn get_detail_by_id(&self, category_id: &str) -> Option<Category> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("CATEGORIES_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "category_id": category_id };
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        result.and_then(|doc| bson::from_document(doc).ok())
+    }
+
     fn build_condition_query(&self, query_string: &HashMap<String, String>) -> Document {
         let mut condition_query = Document::new();
 
