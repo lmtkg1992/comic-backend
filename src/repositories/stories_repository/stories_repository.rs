@@ -220,6 +220,106 @@ impl StoriesRepository {
     }
 
     /**
+     * Get list stories by category_id
+     */
+    pub async fn get_list_by_category_id(&self, category_id: &str, query_string: HashMap<String, String>) -> Result<ListStoriesResponse, Error> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let stories_collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let mapping_collection_name = _config.get_config_with_key("STORIES_CATEGORIES_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        // Find story_ids by category_id
+        let filter = doc! { "category_id": category_id };
+        let mut cursor = db.collection(mapping_collection_name.as_str()).find(filter, None).await?;
+        let mut story_ids = Vec::new();
+        while let Some(doc) = cursor.next().await {
+            match doc {
+                Ok(doc) => {
+                    if let Some(story_id) = doc.get_str("story_id").ok() {
+                        story_ids.push(story_id.to_string());
+                    }
+                }
+                Err(_err) => (),
+            }
+        }
+
+        // If no stories found, return empty list
+        if story_ids.is_empty() {
+            return Ok(ListStoriesResponse {
+                message: String::from("Successfully"),
+                error: false,
+                data: ListStories {
+                    list: vec![],
+                    total: 0,
+                    total_page: 0,
+                }
+            });
+        }
+
+        let condition_query = doc! { "story_id": { "$in": story_ids } };
+
+        // paging
+        let condition_query_count = condition_query.clone();
+        let total_document = db
+            .collection(stories_collection_name.as_str())
+            .count_documents(condition_query_count, None)
+            .await
+            .unwrap();
+        let mut page = match query_string.get("page") {
+            Some(value) => value.parse::<i64>().unwrap(),
+            None => 1,
+        };
+        page = page - 1;
+        let size = match query_string.get("size") {
+            Some(value) => value.parse::<i64>().unwrap(),
+            None => total_document,
+        };
+        let mut total_page = total_document / size;
+        if total_document % size > 0 {
+            total_page = total_page + 1;
+        }
+
+        // query data
+        let find_options = FindOptions::builder().skip(page * size).limit(size).build();
+        let mut cursor = db
+            .collection(stories_collection_name.as_str())
+            .find(condition_query, find_options)
+            .await
+            .unwrap();
+
+        let cdn_path = _config.get_config_with_key("CDN_PATH");
+        let mut list_document: Vec<Stories> = Vec::new();
+        while let Some(doc) = cursor.next().await {
+            match doc {
+                Ok(doc) => {
+                    let document = Stories {
+                        story_id: doc.get_str("story_id").unwrap().to_owned(),
+                        increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
+                        title: doc.get_str("title").unwrap().to_owned(),
+                        url_key: doc.get_str("url_key").unwrap().to_owned(),
+                        path_image: format!("{}{}", cdn_path, doc.get_str("path_image").unwrap().to_owned()),
+                        author: doc.get_str("author").unwrap().to_owned(),
+                        description: doc.get_str("description").unwrap().to_owned(),
+                        publish_date: doc.get_str("publish_date").unwrap().to_owned(),
+                        status: doc.get_str("status").unwrap().to_owned()
+                    };
+                    list_document.push(document)
+                }
+                Err(_err) => (),
+            }
+        }
+        Ok(ListStoriesResponse {
+            message: String::from("Successfully"),
+            error: false,
+            data: ListStories {
+                list: list_document,
+                total: total_document,
+                total_page: total_page,
+            }
+        })
+    }
+    /**
      * Update path image
      */
     pub async fn update_path_image(&self, story_id: &str, new_path_image: &str) -> Result<(), Error> {
