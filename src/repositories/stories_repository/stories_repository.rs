@@ -28,6 +28,8 @@ impl StoriesRepository {
             let _config: Config = Config {};
             let database_name = _config.get_config_with_key("DATABASE_NAME");
             let collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+            let cdn_path = _config.get_config_with_key("CDN_PATH");
+
             let db = self.connection.database(database_name.as_str());
 
             let condition_query = self.build_condition_query(&query_string);
@@ -70,6 +72,7 @@ impl StoriesRepository {
                                     increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
                                     title: doc.get_str("title").unwrap().to_owned(),
                                     url_key: doc.get_str("url_key").unwrap().to_owned(),
+                                    path_image: format!("{}{}", cdn_path, doc.get_str("path_image").unwrap().to_owned()),
                                     author: doc.get_str("author").unwrap().to_owned(),
                                     description: doc.get_str("description").unwrap().to_owned(),
                                     publish_date: doc.get_str("publish_date").unwrap().to_owned(),
@@ -115,6 +118,7 @@ impl StoriesRepository {
                             "increment_id": increment_id,
                             "title": document.title,
                             "url_key": url_key,
+                            "path_image": document.path_image,
                             "author": document.author,
                             "description": document.description,
                             "publish_date": document.publish_date,
@@ -143,6 +147,7 @@ impl StoriesRepository {
         let _config: Config = Config {};
         let database_name = _config.get_config_with_key("DATABASE_NAME");
         let collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let cdn_path = _config.get_config_with_key("CDN_PATH");
         let db = self.connection.database(database_name.as_str());
 
         let filter = doc! { "story_id": story_id };
@@ -153,9 +158,17 @@ impl StoriesRepository {
             .ok()
             .flatten();
 
-        result.and_then(|doc| bson::from_document(doc).ok())
+
+        result.and_then(|doc| {
+            let mut story: Stories = bson::from_document(doc).ok()?;
+            story.path_image = format!("{}{}", cdn_path, &story.path_image);
+            Some(story)
+        })
     }
 
+    /**
+     * Assign categories
+     */
     pub async fn assign_categories(&self, mapping: PostStoryCategoryMapping) -> Response {
 
         let _config: Config = Config {};
@@ -205,6 +218,27 @@ impl StoriesRepository {
             },
         }
     }
+
+    /**
+     * Update path image
+     */
+    pub async fn update_path_image(&self, story_id: &str, new_path_image: &str) -> Result<(), Error> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        db.collection(collection_name.as_str())
+            .update_one(
+                doc! { "story_id": story_id },
+                doc! { "$set": { "path_image": new_path_image } },
+                None,
+            )
+            .await?;
+
+        Ok(())
+    }
+
 
     /**
      * Build condition query

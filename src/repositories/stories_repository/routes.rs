@@ -4,7 +4,7 @@ use crate::models::stories::stories::{Stories};
 use crate::models::stories::payload::{PostStoryCategoryMapping};
 
 use crate::repositories::stories_repository::StoriesRepository;
-use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use actix_web::{get, post, put, web, HttpRequest, HttpResponse};
 
 use std::collections::HashMap;
 
@@ -67,9 +67,24 @@ async fn assign_categories(mapping: web::Json<PostStoryCategoryMapping>) -> Http
     HttpResponse::Ok().json(_story_repository.assign_categories(mapping.into_inner()).await)
 }
 
+#[put("/update_path_image/{story_id}")]
+async fn update_path_image(req: HttpRequest, new_path: web::Json<String>) -> HttpResponse {
+    let story_id = req.match_info().get("story_id").unwrap().to_string();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: StoriesRepository = StoriesRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.update_path_image(&story_id, &new_path).await {
+        Ok(_) => HttpResponse::Ok().body("Path image updated successfully"),
+        Err(_) => HttpResponse::InternalServerError().body("Failed to update path image"),
+    }
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_list);
     cfg.service(get_detail);
     cfg.service(assign_categories);
+    cfg.service(update_path_image);
 }

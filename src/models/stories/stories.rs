@@ -6,6 +6,7 @@ pub struct Stories {
     pub increment_id: i64, // New field for auto-increment ID
     pub title: String,
     pub url_key: String,
+    pub path_image: String,
     pub author: String,
     pub description: String,
     pub publish_date: String,
