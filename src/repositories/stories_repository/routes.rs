@@ -7,6 +7,7 @@ use crate::repositories::stories_repository::StoriesRepository;
 use actix_web::{get, post, put, web, HttpRequest, HttpResponse};
 
 use std::collections::HashMap;
+use serde_json::json;
 
 #[post("/create")]
 async fn create(document: web::Json<Stories>) -> HttpResponse {
@@ -30,6 +31,8 @@ async fn get_list(_req: HttpRequest) -> HttpResponse {
             );
         }
     }
+    //only filter stories is_active = true
+    hash_query_string.insert("is_active".to_string(), "true".to_string());
 
     let _connection_client = Connection::init().await.unwrap();
     let _story_repository: StoriesRepository = StoriesRepository {
@@ -54,7 +57,7 @@ async fn get_detail(req: HttpRequest) -> HttpResponse {
 
     match _repository.get_detail_by_id(story_id).await {
         Some(story) => HttpResponse::Ok().json(story),
-        None => HttpResponse::NotFound().body("Story not found"),
+        None => HttpResponse::NotFound().json(json!({"message": "Story not found"}))
     }
 }
 
@@ -82,6 +85,8 @@ async fn get_list_by_category_id(req: HttpRequest) -> HttpResponse {
             );
         }
     }
+    //only filter stories is_active = true
+    hash_query_string.insert("is_active".to_string(), "true".to_string());
 
     let _connection_client = Connection::init().await.unwrap();
     let _story_repository: StoriesRepository = StoriesRepository {

@@ -48,8 +48,9 @@ impl StoriesRepository {
             page = page - 1;
             let size = match query_string.get("size") {
                 Some(value) => value.parse::<i64>().unwrap(),
-                None => total_document,
+                None => 15,//default size
             };
+
             let mut total_page = total_document / size;
             if total_document % size > 0 {
                 total_page = total_page + 1;
@@ -67,17 +68,7 @@ impl StoriesRepository {
             while let Some(doc) = cursor.next().await {
                         match doc {
                             Ok(doc) => {
-                                let document = Stories {
-                                    story_id: doc.get_str("story_id").unwrap().to_owned(),
-                                    increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
-                                    title: doc.get_str("title").unwrap().to_owned(),
-                                    url_key: doc.get_str("url_key").unwrap().to_owned(),
-                                    path_image: format!("{}{}", cdn_path, doc.get_str("path_image").unwrap().to_owned()),
-                                    author: doc.get_str("author").unwrap().to_owned(),
-                                    description: doc.get_str("description").unwrap().to_owned(),
-                                    publish_date: doc.get_str("publish_date").unwrap().to_owned(),
-                                    status: doc.get_str("status").unwrap().to_owned()
-                                };
+                                let document = Self::doc_to_story(&doc, &cdn_path);
                                 list_document.push(document)
                             }
                             Err(_err) => (),
@@ -118,11 +109,15 @@ impl StoriesRepository {
                             "increment_id": increment_id,
                             "title": document.title,
                             "url_key": url_key,
+                            "is_active" : document.is_active,
                             "path_image": document.path_image,
-                            "author": document.author,
+                            "author_id": document.author_id,
                             "description": document.description,
                             "publish_date": document.publish_date,
-                            "status": document.status
+                            "status": document.status,
+                            "is_full": document.is_full,
+                            "is_hot": document.is_hot,
+                            "total_chapters": document.total_chapters,
                         },
                         None,
                     )
@@ -150,7 +145,7 @@ impl StoriesRepository {
         let cdn_path = _config.get_config_with_key("CDN_PATH");
         let db = self.connection.database(database_name.as_str());
 
-        let filter = doc! { "story_id": story_id };
+        let filter = doc! { "story_id": story_id , "is_active" : bson::Bson::Boolean(true)};
         let result = db
             .collection(collection_name.as_str())
             .find_one(filter, None)
@@ -257,7 +252,9 @@ impl StoriesRepository {
             });
         }
 
-        let condition_query = doc! { "story_id": { "$in": story_ids } };
+        let mut condition_query = self.build_condition_query(&query_string);
+        condition_query.insert("story_id".to_owned(), doc! { "$in": story_ids });
+//         let condition_query = doc! { "story_id": { "$in": story_ids } };
 
         // paging
         let condition_query_count = condition_query.clone();
@@ -273,7 +270,7 @@ impl StoriesRepository {
         page = page - 1;
         let size = match query_string.get("size") {
             Some(value) => value.parse::<i64>().unwrap(),
-            None => total_document,
+            None => 15,//default size
         };
         let mut total_page = total_document / size;
         if total_document % size > 0 {
@@ -293,17 +290,7 @@ impl StoriesRepository {
         while let Some(doc) = cursor.next().await {
             match doc {
                 Ok(doc) => {
-                    let document = Stories {
-                        story_id: doc.get_str("story_id").unwrap().to_owned(),
-                        increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
-                        title: doc.get_str("title").unwrap().to_owned(),
-                        url_key: doc.get_str("url_key").unwrap().to_owned(),
-                        path_image: format!("{}{}", cdn_path, doc.get_str("path_image").unwrap().to_owned()),
-                        author: doc.get_str("author").unwrap().to_owned(),
-                        description: doc.get_str("description").unwrap().to_owned(),
-                        publish_date: doc.get_str("publish_date").unwrap().to_owned(),
-                        status: doc.get_str("status").unwrap().to_owned()
-                    };
+                    let document = Self::doc_to_story(&doc, &cdn_path);
                     list_document.push(document)
                 }
                 Err(_err) => (),
@@ -319,6 +306,7 @@ impl StoriesRepository {
             }
         })
     }
+
     /**
      * Update path image
      */
@@ -363,14 +351,35 @@ impl StoriesRepository {
             condition_query.insert("title".to_owned(), title);
         }
 
-        let author: String = query_string
-                .get("author")
+        let is_active: String = query_string
+                .get("is_active")
                 .unwrap_or(&String::from(""))
                 .to_string();
-        if author != "" {
-            condition_query.insert("author".to_owned(), author);
+        if is_active == "true" {
+            condition_query.insert("is_active".to_owned(), bson::Bson::Boolean(true));
         }
 
         return condition_query;
+    }
+
+    /**
+     * Convert document to story
+     */
+    fn doc_to_story(doc: &Document, cdn_path: &str) -> Stories {
+        Stories {
+            story_id: doc.get_str("story_id").unwrap().to_owned(),
+            increment_id: doc.get_i64("increment_id").unwrap().to_owned(),
+            title: doc.get_str("title").unwrap().to_owned(),
+            url_key: doc.get_str("url_key").unwrap().to_owned(),
+            is_active: doc.get_bool("is_active").unwrap().to_owned(),
+            path_image: format!("{}{}", cdn_path, doc.get_str("path_image").unwrap().to_owned()),
+            author_id: doc.get_str("author_id").unwrap().to_owned(),
+            description: doc.get_str("description").unwrap().to_owned(),
+            publish_date: doc.get_str("publish_date").unwrap().to_owned(),
+            status: doc.get_str("status").unwrap().to_owned(),
+            is_full: doc.get_bool("is_full").unwrap().to_owned(),
+            is_hot: doc.get_bool("is_hot").unwrap().to_owned(),
+            total_chapters: doc.get_i64("total_chapters").unwrap().to_owned(),
+        }
     }
 }
