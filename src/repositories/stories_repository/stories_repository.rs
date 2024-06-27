@@ -254,7 +254,6 @@ impl StoriesRepository {
 
         let mut condition_query = self.build_condition_query(&query_string);
         condition_query.insert("story_id".to_owned(), doc! { "$in": story_ids });
-//         let condition_query = doc! { "story_id": { "$in": story_ids } };
 
         // paging
         let condition_query_count = condition_query.clone();
@@ -326,7 +325,6 @@ impl StoriesRepository {
 
         Ok(())
     }
-
 
     /**
      * Build condition query

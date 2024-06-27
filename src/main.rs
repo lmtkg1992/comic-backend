@@ -35,6 +35,7 @@ async fn main() -> std::io::Result<()> {
             .service(web::scope("/stories").configure(repositories::stories_repository::init_routes))
             .service(web::scope("/categories").configure(repositories::categories_repository::init_routes))
             .service(web::scope("/chapters").configure(repositories::chapters_repository::init_routes))
+            .service(web::scope("/authors").configure(repositories::authors_repository::init_routes))
             .data(web::JsonConfig::default().limit(1024 * 1024 * 50))
     })
     .bind("0.0.0.0:8083")?
