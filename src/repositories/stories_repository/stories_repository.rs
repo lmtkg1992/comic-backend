@@ -59,8 +59,20 @@ impl StoriesRepository {
                 total_page = total_page + 1;
             }
 
+
+            // Determine sort order
+            let sort_by_latest: String = query_string
+                .get("sort_by_latest")
+                .unwrap_or(&String::from(""))
+                .to_string();
+            let sort_order = if sort_by_latest == "true" {
+                doc! { "updated_date": -1 } // descending order
+            } else {
+                doc! {} // no sorting or apply default sorting logic
+            };
+
             // query data
-            let find_options = FindOptions::builder().skip(page * size).limit(size).build();
+            let find_options = FindOptions::builder().skip(page * size).limit(size).sort(sort_order).build();
             let mut cursor = db
                 .collection(collection_name.as_str())
                 .find(condition_query, find_options)
@@ -405,9 +417,10 @@ impl StoriesRepository {
                 .get("title")
                 .unwrap_or(&String::from(""))
                 .to_string();
-        if title != "" {
-            condition_query.insert("title".to_owned(), title);
-        }
+        if !title.is_empty() {
+            let regex = format!(".*{}.*", regex::escape(&title));
+            condition_query.insert("title".to_owned(), doc! { "$regex": regex, "$options": "i" });
+         }
 
         let is_active: String = query_string
                 .get("is_active")
@@ -423,6 +436,34 @@ impl StoriesRepository {
                 .to_string();
         if author_id != "" {
             condition_query.insert("author_id".to_owned(), author_id);
+        }
+
+        let differ_story_id: String = query_string
+                .get("differ_story_id")
+                .unwrap_or(&String::from(""))
+                .to_string();
+        if !differ_story_id.is_empty() {
+            condition_query.insert("story_id".to_owned(), doc! { "$ne": differ_story_id });
+        }
+
+        let is_full: String = query_string
+            .get("is_full")
+            .unwrap_or(&String::from(""))
+            .to_string();
+        if is_full == "true" {
+            condition_query.insert("is_full".to_owned(), bson::Bson::Boolean(true));
+        } else if is_full == "false" {
+            condition_query.insert("is_full".to_owned(), bson::Bson::Boolean(false));
+        }
+
+        let is_hot: String = query_string
+            .get("is_hot")
+            .unwrap_or(&String::from(""))
+            .to_string();
+        if is_hot == "true" {
+            condition_query.insert("is_hot".to_owned(), bson::Bson::Boolean(true));
+        } else if is_hot == "false" {
+            condition_query.insert("is_hot".to_owned(), bson::Bson::Boolean(false));
         }
 
         return condition_query;

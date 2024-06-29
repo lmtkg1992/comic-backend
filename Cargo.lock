@@ -641,6 +641,7 @@ dependencies = [
  "lettre",
  "mime",
  "mongodb",
+ "regex",
  "rust-crypto",
  "serde",
  "serde_derive",
