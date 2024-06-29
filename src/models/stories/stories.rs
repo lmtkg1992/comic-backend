@@ -11,6 +11,7 @@ pub struct Stories {
     pub author_id: String,
     pub description: String,
     pub publish_date: String,
+    pub updated_date: String,
     pub status: String,
     pub is_full: bool,
     pub is_hot: bool,
