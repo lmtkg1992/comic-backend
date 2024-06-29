@@ -2,6 +2,7 @@ use crate::db::db::Connection;
 use crate::models::chapters::chapters::{Chapters};
 use crate::repositories::chapters_repository::ChaptersRepository;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
+use serde_json::json;
 
 use std::collections::HashMap;
 
@@ -37,7 +38,7 @@ async fn get_list_by_story_id(req: HttpRequest) -> HttpResponse {
 
     match _repository.get_list_by_story_id(story_id, hash_query_string).await {
         Ok(result) => HttpResponse::Ok().json(result),
-        Err(_err) => HttpResponse::InternalServerError().body("Failed to get chapters"),
+        Err(_err) => HttpResponse::InternalServerError().json(json!({"message": "Failed to get chapters"})),
     }
 }
 
@@ -51,12 +52,28 @@ async fn get_detail(req: HttpRequest) -> HttpResponse {
 
     match _repository.get_detail_by_id(chapter_id).await {
         Some(chapter) => HttpResponse::Ok().json(chapter),
-        None => HttpResponse::NotFound().body("Chapter not found"),
+        None => HttpResponse::NotFound().json(json!({"message": "Chapter not found"})),
+    }
+}
+
+#[get("/detail/{story_id}/{ordered}")]
+async fn get_detail_by_story_and_ordered(req: HttpRequest) -> HttpResponse {
+    let story_id = req.match_info().get("story_id").unwrap();
+    let ordered = req.match_info().get("ordered").unwrap().parse::<i64>().unwrap();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: ChaptersRepository = ChaptersRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.get_detail_by_story_and_ordered(story_id, ordered).await {
+        Some(chapter) => HttpResponse::Ok().json(chapter),
+        None => HttpResponse::NotFound().json(json!({"message": "Chapter not found"})),
     }
 }
 
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_detail);
+    cfg.service(get_detail_by_story_and_ordered);
     cfg.service(get_list_by_story_id);
 }

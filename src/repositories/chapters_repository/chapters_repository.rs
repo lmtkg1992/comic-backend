@@ -85,6 +85,26 @@ impl ChaptersRepository {
     }
 
     /**
+     * Get chapter detail by story ID and ordered
+     */
+    pub async fn get_detail_by_story_and_ordered(&self, story_id: &str, ordered: i64) -> Option<Chapters> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("CHAPTERS_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "story_id": story_id, "ordered": ordered };
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        result.and_then(|doc| bson::from_document(doc).ok())
+    }
+
+    /**
      * Get list of chapters by story ID
      */
     pub async fn get_list_by_story_id(&self, story_id: &str,query_string: HashMap<String, String>) -> Result<ListChaptersResponse, Error> {
