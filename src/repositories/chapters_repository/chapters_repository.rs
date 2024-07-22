@@ -33,6 +33,8 @@ impl ChaptersRepository {
         let increment_id = get_next_increment_id(&self.connection, collection_name.as_str()).await;
         let url_key = generate_url_key(&chapter.title);
 
+        let story_id = chapter.story_id.clone(); // Clone the story_id to use it later
+
         let _ex = db
             .collection(collection_name.as_str())
             .insert_one(
@@ -52,16 +54,41 @@ impl ChaptersRepository {
             )
             .await;
 
-        match _ex {
-            Ok(_) => Response {
-                error: false,
-                message: "Create document successful.".to_string(),
-            },
-            Err(_) => Response {
-                error: true,
-                message: "Something went wrong.".to_string(),
-            },
-        }
+            match _ex {
+                Ok(_) => {
+                    // Count the total number of chapters for the story
+                    let chapters_count = db
+                        .collection(collection_name.as_str())
+                        .count_documents(doc! { "story_id": &story_id }, None)
+                        .await
+                        .unwrap_or(0);
+
+                    // Update the total chapters count in the stories collection
+                    let stories_collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+                    let filter = doc! { "story_id": &story_id };
+                    let update = doc! { "$set": { "total_chapters": chapters_count as i64 } };
+
+                    let update_result = db
+                        .collection(stories_collection_name.as_str())
+                        .update_one(filter, update, None)
+                        .await;
+
+                    match update_result {
+                        Ok(_) => Response {
+                            error: false,
+                            message: "Create document and update total chapters successful.".to_string(),
+                        },
+                        Err(_) => Response {
+                            error: true,
+                            message: "Failed to update total chapters.".to_string(),
+                        },
+                    }
+                },
+                Err(_) => Response {
+                    error: true,
+                    message: "Something went wrong.".to_string(),
+                },
+            }
     }
 
     /**
