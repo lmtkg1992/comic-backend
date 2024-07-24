@@ -11,6 +11,13 @@ pub struct Category {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct CategoryStory {
+    pub category_id: String,
+    pub category_name: String,
+    pub url_key: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct ListCategories {
     pub list: Vec<Category>,
     pub total: i64,

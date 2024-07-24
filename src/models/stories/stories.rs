@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use crate::models::authors::authors::AuthorStory;
+use crate::models::categories::categories::CategoryStory;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Stories {
@@ -18,7 +19,8 @@ pub struct Stories {
     pub is_hot: bool,
     pub total_chapters: i64,
     pub source: String,
-    pub translator: String
+    pub translator: String,
+    pub categories: Vec<CategoryStory>
 }
 
 #[derive(Serialize, Deserialize, Debug)]

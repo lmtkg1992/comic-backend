@@ -4,6 +4,7 @@ use crate::models::response::{Response};
 use mongodb::bson::doc;
 use mongodb::Client;
 use uuid::Uuid;
+use slugify::slugify;
 
 pub struct AuthorsRepository {
     pub connection: Client,
@@ -21,12 +22,14 @@ impl AuthorsRepository {
         let db = self.connection.database(database_name.as_str());
 
         let author_id = Uuid::new_v4().to_string();
+        let url_key = slugify!(&author.title); // Generate url_key using slugify
         let _ex = db
             .collection(collection_name.as_str())
             .insert_one(
                 doc! {
                     "author_id": author_id,
                     "title": author.title,
+                    "url_key": url_key,
                     "created_date": author.created_date,
                     "updated_date": author.updated_date,
                 },
