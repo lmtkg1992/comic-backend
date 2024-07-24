@@ -7,3 +7,9 @@ pub struct Authors {
     pub created_date: String,
     pub updated_date: String,
 }
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct AuthorStory {
+    pub author_id: String,
+    pub author_title: String,
+}

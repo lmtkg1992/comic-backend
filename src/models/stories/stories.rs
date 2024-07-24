@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use crate::models::authors::authors::AuthorStory;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Stories {
@@ -8,14 +9,16 @@ pub struct Stories {
     pub url_key: String,
     pub is_active: bool,
     pub path_image: String,
-    pub author_id: String,
+    pub author: AuthorStory,
     pub description: String,
     pub publish_date: String,
     pub updated_date: String,
     pub status: String,
     pub is_full: bool,
     pub is_hot: bool,
-    pub total_chapters: i64
+    pub total_chapters: i64,
+    pub source: String,
+    pub translator: String
 }
 
 #[derive(Serialize, Deserialize, Debug)]
