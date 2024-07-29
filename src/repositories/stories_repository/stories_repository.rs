@@ -178,7 +178,7 @@ impl StoriesRepository {
                     .collection(collection_name.as_str())
                     .insert_one(
                         doc! {
-                            "story_id": document_id,
+                            "story_id": document_id.clone(),
                             "increment_id": increment_id,
                             "title": document.title,
                             "url_key": url_key,
@@ -202,7 +202,7 @@ impl StoriesRepository {
          match _ex {
                     Ok(_) => Response {
                         error: false,
-                        message: "Create document successful.".to_string(),
+                        message: format!("Create document successful. Story ID: {}", document_id),
                     },
                     Err(_) => Response {
                         error: false,
@@ -222,6 +222,30 @@ impl StoriesRepository {
         let db = self.connection.database(database_name.as_str());
 
         let filter = doc! { "story_id": story_id , "is_active" : bson::Bson::Boolean(true)};
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        match result {
+            Some(story) => Some(self.doc_to_story(&story, &cdn_path).await),
+            None => None,
+        }
+    }
+
+    /**
+     * Get story detail by url key
+     */
+    pub async fn get_detail_by_url_key(&self, url_key: &str) -> Option<Stories> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let cdn_path = _config.get_config_with_key("CDN_PATH");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "url_key": url_key , "is_active" : bson::Bson::Boolean(true)};
         let result = db
             .collection(collection_name.as_str())
             .find_one(filter, None)

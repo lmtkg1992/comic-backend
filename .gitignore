@@ -1,1 +1,8 @@
 src/config/*
+Cargo.lock
+deploy_local.sh
+deploy_prod.sh
+list_project.sh
+save_gpt.sh
+target
+target/*
