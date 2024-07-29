@@ -132,6 +132,42 @@ impl ChaptersRepository {
     }
 
     /**
+     * Get chapter detail by story url key and chapter url key
+     */
+    pub async fn get_detail_by_story_and_chapter_url_key(&self, story_url_key: &str, chapter_url_key: &str) -> Option<Chapters> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let stories_collection_name = _config.get_config_with_key("STORIES_COLLECTION_NAME");
+        let chapters_collection_name = _config.get_config_with_key("CHAPTERS_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        // Get story id from story url key
+        let story_filter = doc! { "url_key": story_url_key };
+        let story_result = db
+            .collection(stories_collection_name.as_str())
+            .find_one(story_filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        let story_id = match story_result {
+            Some(story) => story.get_str("story_id").unwrap().to_string(),
+            None => return None,
+        };
+
+        // Get chapter details using story id and chapter url key
+        let chapter_filter = doc! { "story_id": &story_id, "url_key": chapter_url_key };
+        let chapter_result = db
+            .collection(chapters_collection_name.as_str())
+            .find_one(chapter_filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        chapter_result.and_then(|doc| bson::from_document(doc).ok())
+    }
+
+    /**
      * Get list of chapters by story ID
      */
     pub async fn get_list_by_story_id(&self, story_id: &str,query_string: HashMap<String, String>) -> Result<ListChaptersResponse, Error> {

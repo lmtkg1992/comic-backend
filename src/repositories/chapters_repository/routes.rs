@@ -71,9 +71,26 @@ async fn get_detail_by_story_and_ordered(req: HttpRequest) -> HttpResponse {
     }
 }
 
+#[get("/detail_by_url/{story_url_key}/{chapter_url_key}")]
+async fn get_detail_by_story_and_chapter_url_key(req: HttpRequest) -> HttpResponse {
+    let story_url_key = req.match_info().get("story_url_key").unwrap();
+    let chapter_url_key = req.match_info().get("chapter_url_key").unwrap();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: ChaptersRepository = ChaptersRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.get_detail_by_story_and_chapter_url_key(story_url_key, chapter_url_key).await {
+        Some(chapter) => HttpResponse::Ok().json(chapter),
+        None => HttpResponse::NotFound().json(json!({"message": "Chapter not found"})),
+    }
+}
+
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_detail);
     cfg.service(get_detail_by_story_and_ordered);
+    cfg.service(get_detail_by_story_and_chapter_url_key);
     cfg.service(get_list_by_story_id);
 }
