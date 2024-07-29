@@ -16,6 +16,10 @@ pub struct CategoriesRepository {
 }
 
 impl CategoriesRepository {
+
+    /**
+     * Get list of categories
+     */
     pub async fn get_list(&self, query_string: HashMap<String, String>) -> Result<ListCategoriesResponse, Error> {
         let _config: Config = Config {};
         let database_name = _config.get_config_with_key("DATABASE_NAME");
@@ -80,6 +84,9 @@ impl CategoriesRepository {
         })
     }
 
+    /**
+     * Create new category
+     */
     pub async fn create(&self, document: Category) -> Response {
         let _config: Config = Config {};
         let database_name = _config.get_config_with_key("DATABASE_NAME");
@@ -118,6 +125,9 @@ impl CategoriesRepository {
         }
     }
 
+    /**
+     * Get category detail by id
+     */
     pub async fn get_detail_by_id(&self, category_id: &str) -> Option<Category> {
         let _config: Config = Config {};
         let database_name = _config.get_config_with_key("DATABASE_NAME");
@@ -135,6 +145,29 @@ impl CategoriesRepository {
         result.and_then(|doc| bson::from_document(doc).ok())
     }
 
+    /**
+     * Get category detail by url key
+     */
+    pub async fn get_detail_by_url_key(&self, url_key: &str) -> Option<Category> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("CATEGORIES_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "url_key": url_key };
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        result.and_then(|doc| bson::from_document(doc).ok())
+    }
+
+    /**
+     * Update category by id
+     */
     fn build_condition_query(&self, query_string: &HashMap<String, String>) -> Document {
         let mut condition_query = Document::new();
 

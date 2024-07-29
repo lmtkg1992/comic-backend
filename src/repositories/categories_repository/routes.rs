@@ -5,6 +5,7 @@ use crate::repositories::categories_repository::CategoriesRepository;
 use actix_web::{get, post, web, HttpRequest, HttpResponse};
 
 use std::collections::HashMap;
+use serde_json::json;
 
 #[post("/create")]
 async fn create(document: web::Json<Category>) -> HttpResponse {
@@ -56,8 +57,23 @@ async fn get_detail(req: HttpRequest) -> HttpResponse {
     }
 }
 
+#[get("/detail_by_url_key/{url_key}")]
+async fn get_detail_by_url_key(req: HttpRequest) -> HttpResponse {
+    let url_key = req.match_info().get("url_key").unwrap();
+    let _connection_client = Connection::init().await.unwrap();
+    let _repository: CategoriesRepository = CategoriesRepository {
+        connection: _connection_client,
+    };
+
+    match _repository.get_detail_by_url_key(url_key).await {
+        Some(category) => HttpResponse::Ok().json(category),
+        None => HttpResponse::NotFound().json(json!({"message": "Category not found"})),
+    }
+}
+
 pub fn init_routes(cfg: &mut web::ServiceConfig) {
     cfg.service(create);
     cfg.service(get_list);
     cfg.service(get_detail);
+    cfg.service(get_detail_by_url_key);
 }
