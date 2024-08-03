@@ -68,4 +68,24 @@ impl AuthorsRepository {
 
         result.and_then(|doc| bson::from_document(doc).ok())
     }
+
+    /**
+     * Get author detail by url key
+     */
+    pub async fn get_detail_by_url_key(&self, url_key: &str) -> Option<Authors> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("AUTHORS_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let filter = doc! { "url_key": url_key };
+        let result = db
+            .collection(collection_name.as_str())
+            .find_one(filter, None)
+            .await
+            .ok()
+            .flatten();
+
+        result.and_then(|doc| bson::from_document(doc).ok())
+    }
 }

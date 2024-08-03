@@ -31,7 +31,7 @@ impl ChaptersRepository {
 
         // Increment the URL increment ID
         let increment_id = get_next_increment_id(&self.connection, collection_name.as_str()).await;
-        let url_key = generate_url_key(&chapter.title);
+        let url_key = generate_url_key(&chapter.short_title);
 
         let story_id = chapter.story_id.clone(); // Clone the story_id to use it later
 
@@ -43,6 +43,7 @@ impl ChaptersRepository {
                     "story_id": chapter.story_id,
                     "increment_id": increment_id,
                     "title": chapter.title,
+                    "short_title": chapter.short_title,
                     "url_key": url_key,
                     "content": chapter.content,
                     "ordered": chapter.ordered,
@@ -219,6 +220,7 @@ impl ChaptersRepository {
                         story_id: doc.get_str("story_id").unwrap().to_owned(),
                         increment_id: doc.get_i64("increment_id").unwrap(),
                         title: doc.get_str("title").unwrap().to_owned(),
+                        short_title: doc.get_str("short_title").unwrap().to_owned(),
                         url_key: doc.get_str("url_key").unwrap().to_owned(),
                         ordered: doc.get_i64("ordered").unwrap(),
                         status: doc.get_str("status").unwrap().to_owned(),

@@ -6,6 +6,7 @@ pub struct ChaptersByStoryId {
     pub story_id: String,
     pub increment_id: i64, // New field for auto-increment ID
     pub title: String,
+    pub short_title: String,
     pub url_key: String,
     pub ordered: i64,
     pub status: String,
