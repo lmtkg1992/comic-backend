@@ -30,6 +30,7 @@ impl AuthorsRepository {
                     "author_id": author_id,
                     "title": author.title,
                     "url_key": url_key,
+                    "description": author.description,
                     "created_date": author.created_date,
                     "updated_date": author.updated_date,
                 },

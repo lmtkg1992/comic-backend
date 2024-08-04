@@ -3,6 +3,12 @@ use crate::models::authors::authors::AuthorStory;
 use crate::models::categories::categories::CategoryStory;
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct LastChapter {
+    pub url_key: String,
+    pub title: String,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct Stories {
     pub story_id: String,
     pub increment_id: i64,
@@ -20,7 +26,8 @@ pub struct Stories {
     pub total_chapters: i64,
     pub source: String,
     pub translator: String,
-    pub categories: Vec<CategoryStory>
+    pub categories: Vec<CategoryStory>,
+    pub last_chapter: Option<LastChapter>
 }
 
 #[derive(Serialize, Deserialize, Debug)]
