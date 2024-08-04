@@ -8,6 +8,7 @@ pub struct Category {
     pub url_key: String,
     pub priority: i64,
     pub type_category: String, // category, tag, or number_chapters
+    pub description: String
 }
 
 #[derive(Serialize, Deserialize, Debug)]

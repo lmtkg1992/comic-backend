@@ -67,6 +67,7 @@ impl CategoriesRepository {
                         url_key: doc.get_str("url_key").unwrap().to_owned(),
                         type_category: doc.get_str("type_category").unwrap().to_owned(),
                         priority: doc.get_i64("priority").unwrap().to_owned(),
+                        description: doc.get_str("description").unwrap().to_owned(),
                     };
                     list_document.push(document)
                 }
@@ -108,6 +109,7 @@ impl CategoriesRepository {
                     "url_key": url_key,
                     "priority": document.priority,
                     "type_category": document.type_category,
+                    "description": document.description
                 },
                 None,
             )
