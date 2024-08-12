@@ -52,7 +52,7 @@ impl StoriesRepository {
             page = page - 1;
             let size = match query_string.get("size") {
                 Some(value) => value.parse::<i64>().unwrap(),
-                None => 15,//default size
+                None => 100,//default size
             };
 
             let mut total_page = total_document / size;

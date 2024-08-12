@@ -49,7 +49,12 @@ impl CategoriesRepository {
             total_page = total_page + 1;
         }
 
-        let find_options = FindOptions::builder().skip(page * size).limit(size).build();
+        let find_options = FindOptions::builder()
+            .skip(page * size)
+            .limit(size)
+            .sort(doc! { "priority": 1 }) // Sort by priority in ascending order
+            .build();
+
         let mut cursor = db
             .collection(collection_name.as_str())
             .find(condition_query, find_options)
