@@ -33,6 +33,7 @@ async fn main() -> std::io::Result<()> {
             .wrap(middleware::Logger::default())
             .wrap(cors)
             .service(web::scope("/stories").configure(repositories::stories_repository::init_routes))
+            .service(web::scope("/top_stories").configure(repositories::top_story_repository::init_routes))
             .service(web::scope("/categories").configure(repositories::categories_repository::init_routes))
             .service(web::scope("/chapters").configure(repositories::chapters_repository::init_routes))
             .service(web::scope("/authors").configure(repositories::authors_repository::init_routes))

@@ -503,7 +503,7 @@ impl StoriesRepository {
     /**
      * Convert document to story
      */
-    async fn doc_to_story(&self, doc: &Document, cdn_path: &str) -> Stories {
+    pub async fn doc_to_story(&self, doc: &Document, cdn_path: &str) -> Stories {
         let _config: Config = Config {};
         let authors_collection_name = _config.get_config_with_key("AUTHORS_COLLECTION_NAME");
         let categories_collection_name = _config.get_config_with_key("CATEGORIES_COLLECTION_NAME");
@@ -581,7 +581,7 @@ impl StoriesRepository {
     /**
      * Get last chapter of a story
      */
-    async fn get_last_chapter(&self, story_id: &str, total_chapters: i64) -> Option<LastChapter> {
+    pub async fn get_last_chapter(&self, story_id: &str, total_chapters: i64) -> Option<LastChapter> {
         let _config: Config = Config {};
         let database_name = _config.get_config_with_key("DATABASE_NAME");
         let chapters_collection_name = _config.get_config_with_key("CHAPTERS_COLLECTION_NAME");
