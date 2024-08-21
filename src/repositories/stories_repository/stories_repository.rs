@@ -356,6 +356,16 @@ impl StoriesRepository {
         let mut condition_query = self.build_condition_query(&query_string);
         condition_query.insert("story_id".to_owned(), doc! { "$in": story_ids });
 
+        // Determine sort order based on `sort_by_latest`
+        let sort_by_latest = query_string
+            .get("sort_by_latest")
+            .map_or(false, |val| val == "true");
+        let sort_order = if sort_by_latest {
+            doc! { "updated_date": -1 } // Sort by `updated_date` in descending order
+        } else {
+            doc! {} // No sorting or default sorting
+        };
+
         // paging
         let condition_query_count = condition_query.clone();
         let total_document = db
@@ -378,7 +388,7 @@ impl StoriesRepository {
         }
 
         // query data
-        let find_options = FindOptions::builder().skip(page * size).limit(size).build();
+        let find_options = FindOptions::builder().skip(page * size).limit(size).sort(sort_order).build();
         let mut cursor = db
             .collection(stories_collection_name.as_str())
             .find(condition_query, find_options)
