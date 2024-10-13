@@ -84,9 +84,9 @@ impl StoriesRepository {
             while let Some(doc) = cursor.next().await {
                         match doc {
                             Ok(doc) => {
-                                let mut story = self.doc_to_story(&doc, &cdn_path).await;
+                                let story = self.doc_to_story(&doc, &cdn_path).await;
                                 // Get last chapter
-                                story.last_chapter = self.get_last_chapter(&story.story_id, story.total_chapters).await;
+                                /* story.last_chapter = self.get_last_chapter(&story.story_id, story.total_chapters).await; */
                                 list_document.push(story)
                             }
                             Err(_err) => (),
@@ -400,9 +400,9 @@ impl StoriesRepository {
         while let Some(doc) = cursor.next().await {
             match doc {
                 Ok(doc) => {
-                    let mut story = self.doc_to_story(&doc, &cdn_path).await;
+                    let story = self.doc_to_story(&doc, &cdn_path).await;
                     // Get last chapter
-                    story.last_chapter = self.get_last_chapter(&story.story_id, story.total_chapters).await;
+                    /* story.last_chapter = self.get_last_chapter(&story.story_id, story.total_chapters).await; */
                     list_document.push(story)
                 }
                 Err(_err) => (),
@@ -584,7 +584,10 @@ impl StoriesRepository {
             source: doc.get_str("source").unwrap().to_owned(),
             translator: doc.get_str("translator").unwrap().to_owned(),
             categories,
-            last_chapter: None
+            last_chapter: self.get_last_chapter(
+                    doc.get_str("story_id").unwrap(),
+                    doc.get_i64("total_chapters").unwrap_or(0)
+                ).await
         }
     }
 
