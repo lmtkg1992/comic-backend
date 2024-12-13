@@ -11,6 +11,13 @@ pub struct Authors {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+pub struct ListAuthors {
+    pub list: Vec<Authors>,
+    pub total: i64,
+    pub total_page: i64,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
 pub struct AuthorStory {
     pub author_id: String,
     pub author_title: String,

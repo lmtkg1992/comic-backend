@@ -1,10 +1,14 @@
 use crate::config::{Config, IConfig};
-use crate::models::authors::authors::Authors;
+use crate::models::authors::authors::{Authors, ListAuthors};
+use crate::models::authors::response::{ListAuthorsResponse};
 use crate::models::response::{Response};
 use mongodb::bson::doc;
 use mongodb::Client;
 use uuid::Uuid;
 use slugify::slugify;
+use mongodb::options::FindOptions;
+use mongodb::error::Error;
+use futures::StreamExt;
 
 pub struct AuthorsRepository {
     pub connection: Client,
@@ -50,6 +54,66 @@ impl AuthorsRepository {
         }
     }
 
+    /**
+     * Get list of authors
+     */
+    pub async fn get_list(&self) -> Result<ListAuthorsResponse, Error> {
+        let _config: Config = Config {};
+        let database_name = _config.get_config_with_key("DATABASE_NAME");
+        let collection_name = _config.get_config_with_key("AUTHORS_COLLECTION_NAME");
+        let db = self.connection.database(database_name.as_str());
+
+        let total_document = db
+            .collection(collection_name.as_str())
+            .count_documents(None, None)
+            .await
+            .unwrap();
+
+        let page = 0;
+        let size = 1000;
+        let mut total_page = total_document / size;
+        if total_document % size > 0 {
+            total_page = total_page + 1;
+        }
+
+        let find_options = FindOptions::builder()
+            .skip(page * size)
+            .limit(size)
+            .build();
+
+        let mut cursor = db
+            .collection(collection_name.as_str())
+            .find(None, find_options)
+            .await
+            .unwrap();
+
+        let mut list_document: Vec<Authors> = Vec::new();
+        while let Some(doc) = cursor.next().await {
+            match doc {
+                Ok(doc) => {
+                    let document = Authors {
+                        author_id: doc.get_str("author_id").unwrap().to_owned(),
+                        title: doc.get_str("title").unwrap().to_owned(),
+                        url_key: doc.get_str("url_key").unwrap().to_owned(),
+                        description: doc.get_str("description").unwrap().to_owned(),
+                        created_date: doc.get_str("created_date").unwrap().to_owned(),
+                        updated_date: doc.get_str("updated_date").unwrap().to_owned(),
+                    };
+                    list_document.push(document)
+                }
+                Err(_err) => (),
+            }
+        }
+        Ok(ListAuthorsResponse {
+            message: String::from("Successfully"),
+            error: false,
+            data: ListAuthors {
+                list: list_document,
+                total: total_document,
+                total_page: total_page,
+            }
+        })
+    }
     /**
      * Get detail author by author_id
      */
